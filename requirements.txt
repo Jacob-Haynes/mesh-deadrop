@@ -1,0 +1,4 @@
+meshtastic
+fastapi
+uvicorn[standard]
+websockets
