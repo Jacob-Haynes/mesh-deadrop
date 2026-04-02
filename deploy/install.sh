@@ -3,6 +3,8 @@
 # Usage: sudo bash deploy/install.sh
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(dirname "$SCRIPT_DIR")"
 APP_DIR="/opt/mesh-deadrop"
 
 echo "=== Mesh Dead Drop — Pi Install ==="
@@ -15,7 +17,7 @@ apt-get install -y -qq python3 python3-venv python3-pip
 # 2. Copy project files
 echo "[2/4] Copying project to $APP_DIR..."
 mkdir -p "$APP_DIR"
-cp -r deadrop requirements.txt deploy "$APP_DIR/"
+cp -r "$REPO_DIR/deadrop" "$REPO_DIR/requirements.txt" "$REPO_DIR/deploy" "$APP_DIR/"
 
 # 3. Python venv + deps
 echo "[3/4] Setting up Python environment..."
@@ -34,7 +36,7 @@ chmod +x "$APP_DIR/deploy/start.sh"
 # Drop pi-profiles configs if pi-profiles is installed
 if [ -d "/opt/pi-profiles/profiles.d" ]; then
     echo "Detected pi-profiles — installing profile configs..."
-    cp profiles.d/*.conf /opt/pi-profiles/profiles.d/
+    cp "$REPO_DIR/profiles.d/"*.conf /opt/pi-profiles/profiles.d/
 fi
 
 echo ""
