@@ -50,7 +50,7 @@ class MessageStore:
         with self._lock:
             rows = self._conn.execute(
                 "SELECT id, sender, recipient, body, timestamp FROM messages "
-                "WHERE recipient = ? AND delivered = 0 ORDER BY id",
+                "WHERE recipient = ? COLLATE NOCASE AND delivered = 0 ORDER BY id",
                 (recipient,),
             ).fetchall()
             return [dict(r) for r in rows]
@@ -65,7 +65,7 @@ class MessageStore:
     def pending_count(self, recipient: str) -> int:
         with self._lock:
             row = self._conn.execute(
-                "SELECT COUNT(*) FROM messages WHERE recipient = ? AND delivered = 0",
+                "SELECT COUNT(*) FROM messages WHERE recipient = ? COLLATE NOCASE AND delivered = 0",
                 (recipient,),
             ).fetchone()
             return row[0]
@@ -92,7 +92,7 @@ class MessageStore:
             result = []
             for r in rows:
                 pending = self._conn.execute(
-                    "SELECT COUNT(*) FROM messages WHERE recipient = ? AND delivered = 0",
+                    "SELECT COUNT(*) FROM messages WHERE recipient = ? COLLATE NOCASE AND delivered = 0",
                     (r["callsign"],),
                 ).fetchone()[0]
                 result.append({

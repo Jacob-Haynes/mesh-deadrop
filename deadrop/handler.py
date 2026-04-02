@@ -59,7 +59,7 @@ class DeadDropHandler:
         body = parts[1]
         self._store.store_message(sender, recipient, body)
         logger.info("Stored message from %s to %s", sender, recipient)
-        self._send(sender_id, "OK 1 messages stored")
+        self._send(sender_id, "OK 1 message stored")
 
     def _handle_pickup(self, callsign: str, sender_id: str):
         messages = self._store.get_messages(callsign)
