@@ -12,6 +12,7 @@ EnvironmentFile=-/etc/mesh-deadrop.env
 ExecStart=/bin/sh -c 'exec /opt/mesh-deadrop/.venv/bin/python -m deadrop $DEADROP_ARGS'
 Restart=always
 RestartSec=5
+TimeoutStopSec=15
 Environment=PYTHONUNBUFFERED=1
 
 [Install]

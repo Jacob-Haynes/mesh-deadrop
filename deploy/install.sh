@@ -18,8 +18,10 @@ apt-get install -y -qq python3 python3-venv python3-pip
 
 echo "[2/5] Copying project to $APP_DIR..."
 mkdir -p "$APP_DIR" "$DATA_DIR"
-rm -rf "$APP_DIR/deadrop"
-cp -r "$REPO_DIR/deadrop" "$REPO_DIR/requirements.txt" "$REPO_DIR/deploy" "$REPO_DIR/profiles.d" "$APP_DIR/"
+if [ "$REPO_DIR" != "$APP_DIR" ]; then
+    rm -rf "$APP_DIR/deadrop"
+    cp -r "$REPO_DIR/deadrop" "$REPO_DIR/requirements.txt" "$REPO_DIR/deploy" "$REPO_DIR/profiles.d" "$APP_DIR/"
+fi
 chmod +x "$APP_DIR/deploy/start.sh"
 # Move a database left by older installs into the data dir
 if [ -f "$APP_DIR/messages.db" ] && [ ! -f "$DATA_DIR/messages.db" ]; then
