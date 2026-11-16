@@ -77,3 +77,7 @@ Browse to `http://<pi-ip>:8070` for the status dashboard showing registered node
 ## Security
 
 V1 uses Meshtastic channel encryption for transport security. The dead drop stores messages in plaintext on the Pi. End-to-end encryption (sender encrypts with recipient's public key) is planned for v2.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
