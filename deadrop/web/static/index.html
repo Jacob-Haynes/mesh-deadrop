@@ -68,6 +68,8 @@
     </div>
 
     <script>
+        // Node names and recipients are typed by mesh users: escape before innerHTML
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         let ws;
         function connectWs() {
             const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -106,11 +108,11 @@
                 const msgs = await msgsRes.json();
 
                 document.getElementById('node-table').innerHTML = nodes.map(n =>
-                    `<tr><td>${n.callsign}</td><td>${timeAgo(n.last_seen)}</td><td>${n.message_count}</td><td>${n.pending > 0 ? '<span class="tag pending">' + n.pending + '</span>' : '0'}</td></tr>`
+                    `<tr><td>${esc(n.callsign)}</td><td>${timeAgo(n.last_seen)}</td><td>${n.message_count}</td><td>${n.pending > 0 ? '<span class="tag pending">' + n.pending + '</span>' : '0'}</td></tr>`
                 ).join('');
 
                 document.getElementById('msg-table').innerHTML = msgs.map(m =>
-                    `<tr><td>${timeAgo(m.timestamp)}</td><td>${m.sender}</td><td>${m.recipient}</td><td><span class="tag ${m.delivered ? 'delivered' : 'pending'}">${m.delivered ? 'DELIVERED' : 'PENDING'}</span></td></tr>`
+                    `<tr><td>${timeAgo(m.timestamp)}</td><td>${esc(m.sender)}</td><td>${esc(m.recipient)}</td><td><span class="tag ${m.delivered ? 'delivered' : 'pending'}">${m.delivered ? 'DELIVERED' : 'PENDING'}</span></td></tr>`
                 ).join('');
             } catch (e) {}
         }
