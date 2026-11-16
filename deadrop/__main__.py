@@ -69,6 +69,19 @@ def main():
     web_module.link = link
     app = web_module.create_app()
 
+    from deadrop.heartbeat import Heartbeat
+
+    def heartbeat_state():
+        if args.simulate:
+            return "simulate", "ok", "simulated activity, no radio"
+        stats = store.get_stats()
+        detail = f"{type(link).__name__}; {stats['pending']} pending, {stats['nodes']} nodes"
+        if not link.connected:
+            return "cpu", "degraded", detail + "; mesh link down"
+        return "cpu", "ok", detail
+
+    heartbeat = Heartbeat("mesh-deadrop", heartbeat_state, port=args.web_port).start()
+
     log.info("Mesh Dead Drop started — Dashboard at http://0.0.0.0:%d", args.web_port)
 
     async def run_web():
@@ -87,6 +100,7 @@ def main():
     except KeyboardInterrupt:
         log.info("Shutting down")
     finally:
+        heartbeat.stop()
         handler.stop()
         link.stop()
 

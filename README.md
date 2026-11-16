@@ -59,6 +59,10 @@ python -m deadrop --serial /dev/ttyUSB0      # standalone, radio direct
 
 To test meshbus end to end on a laptop, run any MQTT broker plus `python -m bridge.mqtt_shim --simulate` from blufor-tracker. It sends fake `DROP`/`PICKUP` texts.
 
+## Heartbeat
+
+Every 10 s the dead drop publishes a retained JSON message to `isrkit/heartbeat/mesh-deadrop` (`status` ok/degraded, `mode` cpu/simulate) for the launcher. It publishes `stopped` on a clean exit; `HEARTBEAT=0` turns it off.
+
 ## Tests
 
 ```bash
