@@ -4,6 +4,8 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
+import sys
 
 import uvicorn
 
@@ -41,6 +43,9 @@ def main():
     )
     log = logging.getLogger("deadrop")
     args = parse_args()
+    # uvicorn re-raises SIGTERM after its own shutdown; turn it into a normal exit so the
+    # finally blocks run (heartbeat publishes "stopped" instead of the broker's "error" will)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
 
     from deadrop.handler import DeadDropHandler, SimulatedHandler
     from deadrop.mesh_link import LoggingMeshLink, MeshbusLink, SerialMeshLink
