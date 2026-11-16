@@ -52,7 +52,7 @@ sudo pi-profiles mesh-deadrop
 
 # Manual
 source .venv/bin/activate
-python -m deadrop --simulate                 # fake activity, no radio
+python -m deadrop --simulate                 # fake activity, no radio; replies start "[SIM] "
 python -m deadrop                            # meshbus (needs mesh-bridge)
 python -m deadrop --serial /dev/ttyUSB0      # standalone, radio direct
 ```
@@ -61,7 +61,7 @@ To test meshbus end to end on a laptop, run any MQTT broker plus `python -m brid
 
 ## Heartbeat
 
-Every 10 s the dead drop publishes a retained JSON message to `isrkit/heartbeat/mesh-deadrop` (`status` ok/degraded, `mode` cpu/simulate) for the launcher. It publishes `stopped` on a clean exit; `HEARTBEAT=0` turns it off.
+Every 10 s the dead drop publishes a retained JSON message to `isrkit/heartbeat/mesh-deadrop` (`status` ok/degraded, `mode` cpu/simulate) for the launcher. `host` is `ISR_HOST` if set, else the lowercased short hostname. It publishes `stopped` on a clean exit; `HEARTBEAT=0` turns it off.
 
 ## Tests
 

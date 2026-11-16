@@ -25,6 +25,8 @@ class DeadDropHandler:
     PICKUP/STATUS match on all three.
     """
 
+    TX_PREFIX = ""  # contract C4.3: "[SIM] " on mesh texts made from simulated activity
+
     def __init__(self, store, link=None, reply_interval: float = REPLY_INTERVAL):
         self._store = store
         self._link = link
@@ -87,6 +89,8 @@ class DeadDropHandler:
         self._send(msg.from_id, f"OK {count} messages waiting")
 
     def _send(self, dest_id: str, text: str):
+        if self.TX_PREFIX and not text.startswith(self.TX_PREFIX):
+            text = self.TX_PREFIX + text
         if not self._running:
             self._deliver(dest_id, text)
         else:
@@ -109,7 +113,9 @@ class DeadDropHandler:
 
 
 class SimulatedHandler(DeadDropHandler):
-    """Generates fake drop/pickup activity for testing (no radio)."""
+    """Generates fake drop/pickup activity for testing (no radio). Replies start "[SIM] "."""
+
+    TX_PREFIX = "[SIM] "
 
     NODES = ["Alpha1", "Bravo2", "Charlie3", "Delta4"]
     MESSAGES = [

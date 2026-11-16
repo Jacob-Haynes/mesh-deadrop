@@ -103,3 +103,19 @@ def test_paced_reply_loop(setup):
         assert link.sent == [("!a1a1a1a1", "OK 0 messages waiting")]
     finally:
         h.stop()
+
+
+def test_simulated_replies_are_labelled(tmp_path):
+    """Contract C4.3: mesh texts from --simulate start "[SIM] "; live replies have no prefix."""
+    from deadrop.handler import SimulatedHandler
+
+    store = MessageStore(db_path=str(tmp_path / "sim.db"))
+    link = FakeLink()
+    sim = SimulatedHandler(store, link)  # not started: synchronous replies, no fake traffic thread
+    sim.on_text(alpha("STATUS"))
+    sim.on_text(alpha("DROP B2 hello"))
+    assert link.sent and all(t.startswith("[SIM] ") and t.count("[SIM]") == 1 for _, t in link.sent)
+
+    live = FakeLink()
+    DeadDropHandler(store, live).on_text(alpha("STATUS"))
+    assert not live.sent[0][1].startswith("[SIM]")
