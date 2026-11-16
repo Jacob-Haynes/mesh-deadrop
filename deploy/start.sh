@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
+# Manual launcher. Default: meshbus (needs mesh-bridge running).
+#   deploy/start.sh                      # meshbus
+#   deploy/start.sh --simulate           # fake activity, no radio
+#   deploy/start.sh --serial /dev/ttyUSB0  # standalone, radio direct (stop mesh-bridge first)
 set -euo pipefail
 
 cd /opt/mesh-deadrop
 source .venv/bin/activate
+[ -f /etc/mesh-deadrop.env ] && set -a && . /etc/mesh-deadrop.env && set +a
 
-# Auto-detect Meshtastic serial port
-PORT=""
-for dev in /dev/ttyUSB* /dev/ttyACM*; do
-    [ -e "$dev" ] && PORT="$dev" && break
-done
-
-if [ -z "$PORT" ]; then
-    echo "No Meshtastic device found — starting in simulation mode"
-    exec python -m deadrop --simulate
-fi
-
-echo "Found Meshtastic device: $PORT"
-exec python -m deadrop --port "$PORT"
+exec python -m deadrop "$@"

@@ -15,6 +15,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 # Set by __main__.py
 store = None
+link = None
 
 _clients: set[WebSocket] = set()
 
@@ -32,6 +33,13 @@ def create_app():
         if store is None:
             return {"total": 0, "delivered": 0, "pending": 0, "nodes": 0}
         return store.get_stats()
+
+    @app.get("/api/health")
+    async def health():
+        return {
+            "mesh_link": type(link).__name__ if link is not None else None,
+            "mesh_connected": bool(getattr(link, "connected", False)),
+        }
 
     @app.get("/api/nodes")
     async def nodes():
@@ -69,7 +77,7 @@ async def broadcast_status():
             await ws.send_text(data)
         except Exception:
             dead.add(ws)
-    _clients -= dead
+    _clients.difference_update(dead)
 
 
 async def periodic_broadcast():
