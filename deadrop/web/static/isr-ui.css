@@ -1,0 +1,83 @@
+/* isr-ui.css v1: the shared look for every ISR kit page. Vendor this file unchanged as
+   <package>/static/isr-ui.css; change it in pi-profiles/ui/ and re-copy, never edit a copy. */
+:root {
+  --bg: #0d1117; --panel: #151b23; --panel-2: #1c2430; --line: #2a3442;
+  --text: #e6edf3; --muted: #8b97a6;
+  --accent: #4ea1ff; --ok: #3fb950; --warn: #d29922; --bad: #f85149; --idle: #6e7781;
+  --sim: #a371f7;
+  --r: 10px; --gap: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--font); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+main, .isr-main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 48px; }
+
+/* Header bar: tool name left, ONE overall status pill + "Kit" link right. */
+.isr-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px;
+  padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.isr-bar h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: .02em; }
+.isr-bar .isr-sub { color: var(--muted); font-size: 15px; }
+.isr-bar .isr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.isr-kit-link { color: var(--muted); font-size: 14px; border: 1px solid var(--line);
+  padding: 6px 12px; border-radius: var(--r); }
+.isr-kit-link:hover { color: var(--text); text-decoration: none; border-color: var(--muted); }
+
+/* Status pill: one word. ok=Ready, warn=Degraded, bad=Offline, idle=Off. */
+.isr-pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--line);
+  cursor: default; white-space: nowrap; }
+.isr-pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--idle); }
+.isr-pill.ok::before { background: var(--ok); } .isr-pill.warn::before { background: var(--warn); }
+.isr-pill.bad::before { background: var(--bad); }
+button.isr-pill { cursor: pointer; color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+/* The pill's popover lists the individual checks (AI, TAK, MQTT ...) — hidden until clicked. */
+.isr-status-list { position: absolute; right: 24px; top: 58px; min-width: 260px; background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; display: none; }
+.isr-status-list.open { display: block; }
+.isr-status-list div { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 14px; }
+.isr-status-list .k { color: var(--muted); }
+
+/* Cards and grids */
+.isr-grid { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.isr-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; }
+.isr-card h2, .isr-section { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em; }
+.isr-big { font-size: 34px; font-weight: 600; line-height: 1.1; }
+.isr-muted { color: var(--muted); font-size: 14px; }
+
+/* Buttons: one .primary per screen. */
+.isr-btn, button.isr-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; min-height: 44px; border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.isr-btn:hover { border-color: var(--muted); text-decoration: none; }
+.isr-btn.primary { background: var(--accent); border-color: var(--accent); color: #04121f; }
+.isr-btn.danger { border-color: var(--bad); color: var(--bad); }
+input, select, textarea { font: inherit; color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 9px 12px; min-height: 44px; }
+
+/* Help and diagnostics go in a collapsed <details class="isr-more">, never inline paragraphs. */
+details.isr-more { margin-top: 12px; color: var(--muted); font-size: 14px; }
+details.isr-more > summary { cursor: pointer; list-style: none; }
+details.isr-more > summary::before { content: "▸ "; } details.isr-more[open] > summary::before { content: "▾ "; }
+
+/* Labels kept by contract */
+.isr-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  letter-spacing: .05em; border: 1px solid currentColor; }
+.isr-tag.sim { color: var(--sim); } .isr-tag.rec { color: var(--warn); } .isr-tag.live { color: var(--ok); }
+
+/* Alerts list and one-line banner (use a banner only for something the operator must act on). */
+.isr-banner { padding: 10px 16px; border-radius: var(--r); border: 1px solid var(--warn); color: var(--warn);
+  background: rgba(210,153,34,.08); margin-bottom: var(--gap); }
+.isr-banner.bad { border-color: var(--bad); color: var(--bad); background: rgba(248,81,73,.08); }
+.isr-list { list-style: none; margin: 0; padding: 0; }
+.isr-list li { display: flex; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.isr-list li:last-child { border-bottom: 0; }
+.isr-mono { font-family: var(--mono); font-size: 14px; }
+
+@media (max-width: 640px) {
+  .isr-bar { padding: 10px 16px; flex-wrap: wrap; } main, .isr-main { padding: 16px; }
+  .isr-bar h1 { font-size: 19px; } .isr-bar .isr-sub { display: none; }
+}

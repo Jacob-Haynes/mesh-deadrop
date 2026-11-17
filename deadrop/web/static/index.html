@@ -1,125 +1,150 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesh Dead Drop</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff41; }
-        .header { background: #111; padding: 12px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 18px; letter-spacing: 2px; }
-        .status { font-size: 12px; color: #888; }
-        .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .dot.active { background: #00ff41; }
-        .dot.inactive { background: #ff4444; }
-
-        .container { padding: 20px; }
-
-        .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-        .stat { background: #111; border: 1px solid #333; padding: 8px 14px; border-radius: 4px; }
-        .stat .num { font-size: 20px; color: #fff; }
-        .stat .label { font-size: 10px; color: #888; text-transform: uppercase; }
-
-        .section-title { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; color: #888; font-weight: normal; padding: 6px 10px; border-bottom: 1px solid #333; font-size: 11px; text-transform: uppercase; }
-        td { padding: 6px 10px; border-bottom: 1px solid #1a1a1a; }
-        tr:hover { background: #111; }
-
-        .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
-        .tag.pending { background: #ff8800; color: #000; }
-        .tag.delivered { background: #333; color: #888; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesh dead-drop</title>
+<link rel="stylesheet" href="/static/isr-ui.css">
+<script src="/static/isr-ui.js"></script>
+<style>
+  .md-compose { display: grid; gap: 10px; grid-template-columns: 220px 1fr auto; align-items: center; }
+  .md-compose input { width: 100%; }
+  .md-result { margin-top: 8px; min-height: 22px; }
+  .md-result.bad { color: var(--bad); }
+  .md-head { display: flex; align-items: baseline; gap: 12px; margin: 22px 0 6px; }
+  .md-head .isr-section { margin: 0; }
+  .md-who { font-weight: 600; min-width: 260px; }
+  .md-when { margin-left: auto; }
+  .md-state { font-size: 13px; font-weight: 600; }
+  .md-state.waiting { color: var(--warn); }
+  .md-state.delivered { color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  @media (max-width: 640px) { .md-compose { grid-template-columns: 1fr; } .md-who { min-width: 0; } }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>MESH DEAD DROP</h1>
-        <div class="status">
-            <span class="dot active" id="ws-dot"></span>
-            <span id="ws-status">Connecting...</span>
-        </div>
-    </div>
+<header class="isr-bar">
+  <h1>Mesh dead-drop</h1><span class="isr-sub">Messages over radio</span>
+  <div class="isr-right">
+    <button class="isr-pill" id="isr-status">Starting</button>
+    <a class="isr-kit-link" id="isr-kit-link" href="#">Kit</a>
+  </div>
+  <div class="isr-status-list" id="isr-status-list"></div>
+</header>
 
-    <div class="container">
-        <div class="stats">
-            <div class="stat"><div class="num" id="stat-total">0</div><div class="label">Total Messages</div></div>
-            <div class="stat"><div class="num" id="stat-delivered">0</div><div class="label">Delivered</div></div>
-            <div class="stat"><div class="num" id="stat-pending" style="color:#ff8800">0</div><div class="label">Pending</div></div>
-            <div class="stat"><div class="num" id="stat-nodes">0</div><div class="label">Known Nodes</div></div>
-        </div>
+<main>
+  <div class="isr-card">
+    <h2>Leave a message</h2>
+    <form class="md-compose" id="compose" autocomplete="off">
+      <input id="recipient" list="node-names" placeholder="Recipient, e.g. Bravo2" aria-label="Recipient" required>
+      <input id="body" maxlength="180" placeholder="Message" aria-label="Message" required>
+      <button class="isr-btn primary" type="submit" id="send">Send</button>
+    </form>
+    <datalist id="node-names"></datalist>
+    <div class="md-result isr-muted" id="result">It waits here until the recipient sends PICKUP from their radio.</div>
+  </div>
 
-        <div class="section-title">Registered nodes</div>
-        <table>
-            <thead>
-                <tr><th>Callsign</th><th>Last Seen</th><th>Interactions</th><th>Pending</th></tr>
-            </thead>
-            <tbody id="node-table"></tbody>
-        </table>
+  <div class="md-head">
+    <h2 class="isr-section">Messages</h2>
+    <span class="isr-tag sim" id="sim-tag" hidden>SIM</span>
+    <span class="isr-muted" id="counts"></span>
+  </div>
+  <div class="isr-card">
+    <ul class="isr-list" id="messages"></ul>
+    <p class="isr-muted" id="empty">No messages yet.</p>
+  </div>
 
-        <div class="section-title">Message log</div>
-        <table>
-            <thead>
-                <tr><th>Time</th><th>Sender</th><th>Recipient</th><th>Status</th></tr>
-            </thead>
-            <tbody id="msg-table"></tbody>
-        </table>
-    </div>
+  <details class="isr-more">
+    <summary>Details</summary>
+    <p>From a radio: <span class="isr-mono">DROP &lt;name&gt; &lt;message&gt;</span> leaves a message,
+      <span class="isr-mono">PICKUP</span> collects yours, <span class="isr-mono">STATUS</span> counts them.
+      Message text is never shown here. Messages from this page are sent as <span id="sender">HQ</span>.</p>
+    <table>
+      <thead><tr><th>Node</th><th>Last seen</th><th>Messages</th><th>Waiting</th></tr></thead>
+      <tbody id="nodes"></tbody>
+    </table>
+  </details>
+</main>
 
-    <script>
-        // Node names and recipients are typed by mesh users: escape before innerHTML
-        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        let ws;
-        function connectWs() {
-            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${proto}//${location.host}/ws/status`);
-            ws.onopen = () => {
-                document.getElementById('ws-dot').className = 'dot active';
-                document.getElementById('ws-status').textContent = 'Connected';
-            };
-            ws.onclose = () => {
-                document.getElementById('ws-dot').className = 'dot inactive';
-                document.getElementById('ws-status').textContent = 'Disconnected';
-                setTimeout(connectWs, 2000);
-            };
-            ws.onmessage = (e) => {
-                const stats = JSON.parse(e.data);
-                document.getElementById('stat-total').textContent = stats.total;
-                document.getElementById('stat-delivered').textContent = stats.delivered;
-                document.getElementById('stat-pending').textContent = stats.pending;
-                document.getElementById('stat-nodes').textContent = stats.nodes;
-            };
-        }
+<script>
+  // Node names and recipients are typed by mesh users: escape before innerHTML
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let health = {}, wsOk = false;
 
-        function timeAgo(iso) {
-            const diff = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-            if (diff < 60) return diff + 's ago';
-            if (diff < 3600) return Math.round(diff / 60) + 'm ago';
-            return Math.round(diff / 3600) + 'h ago';
-        }
+  function timeAgo(iso) {
+    const diff = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+    if (diff < 60) return diff + ' s ago';
+    if (diff < 3600) return Math.round(diff / 60) + ' min ago';
+    return Math.round(diff / 3600) + ' h ago';
+  }
 
-        async function pollTables() {
-            try {
-                const [nodesRes, msgsRes] = await Promise.all([
-                    fetch('/api/nodes'), fetch('/api/messages')
-                ]);
-                const nodes = await nodesRes.json();
-                const msgs = await msgsRes.json();
+  function showStatus() {
+    const sim = health.mesh_link === 'LoggingMeshLink';
+    const radio = sim ? {name: 'Radio', state: 'ok', text: 'simulated'}
+      : {name: 'Radio', state: health.mesh_connected ? 'ok' : 'bad',
+         text: health.mesh_connected ? 'connected' : 'not connected'};
+    ISR.setStatus([radio, {name: 'Live feed', state: wsOk ? 'ok' : 'bad', text: wsOk ? 'connected' : 'reconnecting'}]);
+    document.getElementById('sim-tag').hidden = !sim;
+  }
 
-                document.getElementById('node-table').innerHTML = nodes.map(n =>
-                    `<tr><td>${esc(n.callsign)}</td><td>${timeAgo(n.last_seen)}</td><td>${n.message_count}</td><td>${n.pending > 0 ? '<span class="tag pending">' + n.pending + '</span>' : '0'}</td></tr>`
-                ).join('');
+  async function refresh() {
+    try {
+      const [h, nodes, msgs, stats] = await Promise.all(
+        ['/api/health', '/api/nodes', '/api/messages', '/api/stats'].map(u => fetch(u).then(r => r.json())));
+      health = h;
+      showStatus();
+      document.getElementById('counts').textContent = `${stats.pending} waiting, ${stats.delivered} delivered`;
+      document.getElementById('empty').hidden = msgs.length > 0;
+      document.getElementById('messages').innerHTML = msgs.map(m => `<li>
+        <span class="md-who">${esc(m.sender)} → ${esc(m.recipient)}</span>
+        <span class="md-state ${m.delivered ? 'delivered' : 'waiting'}">${m.delivered ? 'Delivered' : 'Waiting'}</span>
+        <span class="md-when isr-muted">${timeAgo(m.timestamp)}</span></li>`).join('');
+      document.getElementById('nodes').innerHTML = nodes.map(n =>
+        `<tr><td>${esc(n.callsign)}</td><td>${timeAgo(n.last_seen)}</td><td>${n.message_count}</td><td>${n.pending}</td></tr>`).join('');
+      document.getElementById('node-names').innerHTML = nodes.map(n => `<option value="${esc(n.callsign)}">`).join('');
+    } catch (e) { /* server restarting */ }
+  }
 
-                document.getElementById('msg-table').innerHTML = msgs.map(m =>
-                    `<tr><td>${timeAgo(m.timestamp)}</td><td>${esc(m.sender)}</td><td>${esc(m.recipient)}</td><td><span class="tag ${m.delivered ? 'delivered' : 'pending'}">${m.delivered ? 'DELIVERED' : 'PENDING'}</span></td></tr>`
-                ).join('');
-            } catch (e) {}
-        }
+  document.getElementById('compose').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const result = document.getElementById('result'), btn = document.getElementById('send');
+    const recipient = document.getElementById('recipient').value.trim();
+    const body = document.getElementById('body').value.trim();
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/drop', {method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({recipient, body})});
+      const data = await r.json().catch(() => ({}));
+      if (r.ok) {
+        result.className = 'md-result isr-muted';
+        result.textContent = `Stored for ${data.recipient}. It is delivered when they send PICKUP.`;
+        document.getElementById('sender').textContent = data.sender;
+        document.getElementById('body').value = '';
+        refresh();
+      } else {
+        result.className = 'md-result bad';
+        result.textContent = typeof data.detail === 'string' ? data.detail : 'Not stored. Check the recipient and message.';
+      }
+    } catch (err) {
+      result.className = 'md-result bad';
+      result.textContent = 'Not stored: the dead-drop is not answering. Try again in a moment.';
+    }
+    btn.disabled = false;
+  });
 
-        connectWs();
-        pollTables();
-        setInterval(pollTables, 3000);
-    </script>
+  function connectWs() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${proto}//${location.host}/ws/status`);
+    ws.onopen = () => { wsOk = true; showStatus(); };
+    ws.onclose = () => { wsOk = false; showStatus(); setTimeout(connectWs, 2000); };
+    ws.onmessage = () => {};  // tables refresh on the 3 s poll
+  }
+
+  refresh();
+  setInterval(refresh, 3000);
+  connectWs();
+</script>
 </body>
 </html>

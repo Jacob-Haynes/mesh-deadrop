@@ -72,7 +72,7 @@ python -m pytest
 
 ## Web Dashboard
 
-Browse to `http://<pi-ip>:8070` for the status dashboard showing registered nodes, message counts, and delivery status.
+Browse to `http://<pi-ip>:8070`. The page lists messages (who to whom, waiting or delivered; the text is never shown) and has a **Send** box that leaves a message for a recipient, exactly like a radio `DROP`. The recipient collects it with `PICKUP`. Web messages are from `DEADROP_WEB_SENDER` (default `HQ`). API: `POST /api/drop` `{"recipient": "Bravo2", "body": "..."}` (one-word recipient, up to 180 characters).
 
 ## Security
 

@@ -3,9 +3,10 @@
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -18,6 +19,14 @@ store = None
 link = None
 
 _clients: set[WebSocket] = set()
+
+MAX_BODY = 180  # leaves room for "MSG <sender> " in a 200-character mesh text
+MAX_RECIPIENT = 40
+
+
+def web_sender() -> str:
+    """Who web-composed drops are from (DEADROP_WEB_SENDER, default HQ)."""
+    return os.environ.get("DEADROP_WEB_SENDER", "").strip() or "HQ"
 
 
 def create_app():
@@ -52,6 +61,24 @@ def create_app():
         if store is None:
             return []
         return store.get_recent_messages()
+
+    @app.post("/api/drop")
+    async def drop(payload: dict = Body(...)):
+        """Leave a message from the web page, exactly like a radio "DROP <recipient> <message>":
+        it waits in the store until the recipient sends PICKUP. Nothing is transmitted now."""
+        if store is None:
+            raise HTTPException(503, "Message store not ready")
+        recipient = str(payload.get("recipient", "")).strip()
+        body = " ".join(str(payload.get("body", "")).split())
+        if not recipient or " " in recipient or len(recipient) > MAX_RECIPIENT:
+            raise HTTPException(400, "Enter one recipient name, no spaces")
+        if not body:
+            raise HTTPException(400, "Enter a message")
+        if len(body) > MAX_BODY:
+            raise HTTPException(400, f"Keep the message under {MAX_BODY} characters")
+        msg_id = store.store_message(web_sender(), recipient, body)
+        logger.info("Stored web message from %s to %s", web_sender(), recipient)
+        return {"id": msg_id, "sender": web_sender(), "recipient": recipient}
 
     @app.websocket("/ws/status")
     async def websocket_endpoint(ws: WebSocket):
