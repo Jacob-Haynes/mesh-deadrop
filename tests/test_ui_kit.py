@@ -59,3 +59,21 @@ def test_compose_drop_stores_like_a_radio_drop(tmp_path, monkeypatch):
     assert c.post("/api/drop", json={"recipient": "two words", "body": "x"}).status_code == 400
     assert c.post("/api/drop", json={"recipient": "Bravo2", "body": " "}).status_code == 400
     assert c.post("/api/drop", json={"recipient": "Bravo2", "body": "x" * 181}).status_code == 400
+
+
+def test_drop_rejects_non_printable_and_never_logs_the_text(tmp_path, caplog):
+    import logging
+
+    from deadrop.store import MessageStore
+
+    web_module.store = MessageStore(db_path=str(tmp_path / "m.db"))
+    c = _client()
+    for bad in ({"recipient": "Bravo2", "body": "hi\x00there"}, {"recipient": "Bravo2", "body": "\x07\x1b[2J"},
+                {"recipient": "Bra\x00vo", "body": "hi"}, {"recipient": "Bravo2", "body": 123},
+                {"recipient": "Bravo2", "body": "\n\t "}, {"recipient": "", "body": "hi"}):
+        assert c.post("/api/drop", json=bad).status_code == 400, bad
+    assert web_module.store.get_stats()["total"] == 0
+    with caplog.at_level(logging.DEBUG):
+        assert c.post("/api/drop", json={"recipient": "Bravo2", "body": "secret rendezvous\nat 0600"}).status_code == 200
+    assert web_module.store.get_messages_for({"bravo2"})[0]["body"] == "secret rendezvous at 0600"
+    assert not any("rendezvous" in r.getMessage() for r in caplog.records)

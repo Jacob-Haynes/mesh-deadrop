@@ -68,16 +68,21 @@ def create_app():
         it waits in the store until the recipient sends PICKUP. Nothing is transmitted now."""
         if store is None:
             raise HTTPException(503, "Message store not ready")
-        recipient = str(payload.get("recipient", "")).strip()
-        body = " ".join(str(payload.get("body", "")).split())
-        if not recipient or " " in recipient or len(recipient) > MAX_RECIPIENT:
+        raw_recipient, raw_body = payload.get("recipient", ""), payload.get("body", "")
+        if not isinstance(raw_recipient, str) or not isinstance(raw_body, str):
+            raise HTTPException(400, "Enter a recipient and a message as text")
+        recipient = raw_recipient.strip()
+        body = " ".join(raw_body.split())  # newlines/tabs become single spaces
+        if not recipient or not recipient.isprintable() or " " in recipient or len(recipient) > MAX_RECIPIENT:
             raise HTTPException(400, "Enter one recipient name, no spaces")
         if not body:
             raise HTTPException(400, "Enter a message")
+        if not body.isprintable():
+            raise HTTPException(400, "Remove the control characters from the message")
         if len(body) > MAX_BODY:
             raise HTTPException(400, f"Keep the message under {MAX_BODY} characters")
         msg_id = store.store_message(web_sender(), recipient, body)
-        logger.info("Stored web message from %s to %s", web_sender(), recipient)
+        logger.info("Stored web message from %s to %s", web_sender(), recipient)  # never the text
         return {"id": msg_id, "sender": web_sender(), "recipient": recipient}
 
     @app.websocket("/ws/status")
