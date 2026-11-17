@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mesh dead-drop</title>
-<link rel="stylesheet" href="/static/isr-ui.css">
-<script src="/static/isr-ui.js"></script>
+<link rel="stylesheet" href="/static/isr-ui.css?v=2">
+<script src="/static/isr-ui.js?v=2"></script>
 <style>
   .md-compose { display: grid; gap: 10px; grid-template-columns: 220px 1fr auto; align-items: center; }
   .md-compose input { width: 100%; }
@@ -13,13 +13,12 @@
   .md-result.bad { color: var(--bad); }
   .md-head { display: flex; align-items: baseline; gap: 12px; margin: 22px 0 6px; }
   .md-head .isr-section { margin: 0; }
-  .md-who { font-weight: 600; min-width: 260px; }
+  .md-who { min-width: 260px; }
   .md-when { margin-left: auto; }
-  .md-state { font-size: 13px; font-weight: 600; }
-  .md-state.waiting { color: var(--warn); }
+  .md-state { font-size: 13px; min-width: 80px; }
   .md-state.delivered { color: var(--muted); }
   table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
-  th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { text-align: left; color: var(--muted); font: 500 14px/1.2 var(--label); letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
   td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
   @media (max-width: 640px) { .md-compose { grid-template-columns: 1fr; } .md-who { min-width: 0; } }
 </style>
@@ -38,7 +37,7 @@
   <div class="isr-card">
     <h2>Leave a message</h2>
     <form class="md-compose" id="compose" autocomplete="off">
-      <input id="recipient" list="node-names" placeholder="Recipient, e.g. Bravo2" aria-label="Recipient" required>
+      <input id="recipient" list="node-names" placeholder="Recipient" aria-label="Recipient" required>
       <input id="body" maxlength="180" placeholder="Message" aria-label="Message" required>
       <button class="isr-btn primary" type="submit" id="send">Send</button>
     </form>
@@ -95,7 +94,8 @@
         ['/api/health', '/api/nodes', '/api/messages', '/api/stats'].map(u => fetch(u).then(r => r.json())));
       health = h;
       showStatus();
-      document.getElementById('counts').textContent = `${stats.pending} waiting, ${stats.delivered} delivered`;
+      const pad = (n) => String(n).padStart(2, '0');
+      document.getElementById('counts').textContent = `${pad(stats.pending)} waiting, ${pad(stats.delivered)} delivered`;
       document.getElementById('empty').hidden = msgs.length > 0;
       document.getElementById('messages').innerHTML = msgs.map(m => `<li>
         <span class="md-who">${esc(m.sender)} → ${esc(m.recipient)}</span>
