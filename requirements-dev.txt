@@ -1,0 +1,5 @@
+# Test-only dependencies: pip install -r requirements.txt -r requirements-dev.txt
+pytest>=8,<10
+# fastapi.testclient (Starlette) imports httpx2 since Starlette 1.x and falls back to httpx on older ones
+httpx2>=2,<3
+httpx>=0.27,<0.29

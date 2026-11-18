@@ -66,7 +66,7 @@ Every 10 s the dead drop publishes a retained JSON message to `isrkit/heartbeat/
 ## Tests
 
 ```bash
-pip install -r requirements.txt pytest httpx
+pip install -r requirements.txt -r requirements-dev.txt   # versions are capped at the ones tested
 python -m pytest
 ```
 
