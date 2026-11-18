@@ -1,13 +1,18 @@
 [Unit]
-Description=Meshtastic Dead Drop Relay
-After=network.target
+Description=Meshtastic Dead Drop Relay (via meshbus)
+After=network.target mesh-bridge.service
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 WorkingDirectory=/opt/mesh-deadrop
-ExecStart=/opt/mesh-deadrop/deploy/start.sh
+EnvironmentFile=-/etc/mesh-deadrop.env
+# Talks to the radio through meshbus (MQTT) and keeps retrying until the broker is up.
+# DEADROP_ARGS can add e.g. --simulate, or --serial /dev/ttyUSB0 for standalone use without mesh-bridge.
+ExecStart=/bin/sh -c 'exec /opt/mesh-deadrop/.venv/bin/python -m deadrop $DEADROP_ARGS'
 Restart=always
 RestartSec=5
+TimeoutStopSec=15
 Environment=PYTHONUNBUFFERED=1
 
 [Install]

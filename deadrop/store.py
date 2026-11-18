@@ -10,7 +10,7 @@ from pathlib import Path
 class MessageStore:
     """Thread-safe SQLite store for dead drop messages and node tracking."""
 
-    def __init__(self, db_path: str = "/opt/mesh-deadrop/messages.db"):
+    def __init__(self, db_path: str = "/var/lib/mesh-deadrop/messages.db"):
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -54,6 +54,23 @@ class MessageStore:
                 (recipient,),
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def get_messages_for(self, names) -> list[dict]:
+        """Undelivered messages addressed to any of ``names`` (node id, short or long name)."""
+        names = [n for n in names if n]
+        if not names:
+            return []
+        marks = ",".join("?" * len(names))
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id, sender, recipient, body, timestamp FROM messages "
+                f"WHERE lower(recipient) IN ({marks}) AND delivered = 0 ORDER BY id",
+                [n.lower() for n in names],
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def pending_count_for(self, names) -> int:
+        return len(self.get_messages_for(names))
 
     def mark_delivered(self, msg_id: int):
         with self._lock:

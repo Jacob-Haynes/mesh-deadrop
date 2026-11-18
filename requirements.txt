@@ -1,4 +1,7 @@
-meshtastic
-fastapi
-uvicorn[standard]
-websockets
+# Upper caps: the newest versions tested (fresh uv venv, 2026-11-18); no lower bounds beyond what the
+# code needs, so an existing offline venv still satisfies them. Raise a cap only after the tests pass.
+meshtastic<2.8
+paho-mqtt>=2.0,<3
+fastapi<0.164
+uvicorn[standard]<0.55
+websockets<18
